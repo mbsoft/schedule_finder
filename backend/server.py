@@ -426,11 +426,11 @@ async def find_gaps(surveyor_id: str):
             )
             gaps.append(gap.model_dump())
     
-    # Store gaps in DB for reference
+    # Store gaps in DB for reference (without returning _id)
     await db.gaps.delete_many({"surveyor_id": surveyor_id})
     for gap in gaps:
         gap["surveyor_id"] = surveyor_id
-        await db.gaps.insert_one(gap)
+        await db.gaps.insert_one(gap.copy())  # Use copy to avoid _id mutation
     
     return gaps
 
