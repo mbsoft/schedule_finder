@@ -946,9 +946,9 @@ const ConfigurationView = ({ config, onSave, hasApiKey, onSaveApiKey }) => {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pb-16">
         <button 
-          className="btn btn-primary"
+          className="btn btn-primary relative z-50"
           onClick={handleSave}
           disabled={saving}
           data-testid="save-config-btn"
