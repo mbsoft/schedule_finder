@@ -578,9 +578,6 @@ async def check_viability(request: ViabilityCheckRequest):
         uses_long_drive=uses_long_drive,
         used_directions_api=used_directions_api
     )
-        drive_time_to=drive_time_to,
-        uses_long_drive=uses_long_drive
-    )
 
 # --- Bulk Viability Check ---
 @api_router.post("/viability-check-bulk")
