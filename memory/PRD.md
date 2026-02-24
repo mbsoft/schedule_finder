@@ -39,6 +39,12 @@ Build a web application version of the MTLL Slot Engine from an Excel file. The 
 - [x] Data seeded from Excel file (Josh's schedule)
 - [x] Dark theme UI matching design guidelines
 
+### NextBillion API Integration (Feb 24, 2026) ✅
+- [x] **Postcode Geocoding API** - Converts UK postcodes to lat/lng coordinates
+- [x] **Directions API** - Gets actual road-based drive times between locations
+- [x] UI shows whether using "Road" times (API) or "Est" times (fallback)
+- [x] 🛣️ indicator on drive times when using real road data
+
 ## API Endpoints
 - `GET /api/dashboard-stats` - Get dashboard statistics
 - `GET /api/schedule` - Get surveyor schedule
