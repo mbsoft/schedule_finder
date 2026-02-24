@@ -487,7 +487,7 @@ async def find_gaps(surveyor_id: str):
 # --- Viability Check (Layer 2) ---
 @api_router.post("/viability-check")
 async def check_viability(request: ViabilityCheckRequest):
-    """Check if a gap is viable for a specific lead postcode"""
+    """Check if a gap is viable for a specific lead postcode using NextBillion Directions API"""
     config = await get_config()
     api_key = await get_api_key()
     
@@ -502,37 +502,47 @@ async def check_viability(request: ViabilityCheckRequest):
     long_threshold = config["long_drive_threshold_mins"]
     safety_mult = config["drive_time_safety_mult"]
     
-    # Estimate drive times (use geocoding if API key available)
-    drive_time_from = 20  # Default estimate
+    # Default drive times (fallback)
+    drive_time_from = 20
     drive_time_to = 20
+    used_directions_api = False
     
     if api_key:
-        # Geocode lead postcode
+        # Step 1: Geocode all postcodes
         lead_geo = await geocode_postcode(request.lead_postcode, api_key)
         
         if lead_geo.success and lead_geo.lat and lead_geo.lng:
-            # Get coordinates for from/to postcodes
-            if gap.get("from_postcode"):
+            # Geocode the "from" postcode (previous job location)
+            if gap.get("from_postcode") and gap["from_postcode"] != "NO POSTCODE":
                 from_geo = await geocode_postcode(gap["from_postcode"], api_key)
                 if from_geo.success and from_geo.lat and from_geo.lng:
-                    drive_time_from = calculate_drive_time_estimate(
+                    # Step 2: Get actual drive time using Directions API
+                    drive_time_from, used_api_from = await get_drive_time(
                         from_geo.lat, from_geo.lng,
-                        lead_geo.lat, lead_geo.lng
+                        lead_geo.lat, lead_geo.lng,
+                        api_key
                     )
+                    if used_api_from:
+                        used_directions_api = True
             
-            if gap.get("to_postcode"):
+            # Geocode the "to" postcode (next job location)
+            if gap.get("to_postcode") and gap["to_postcode"] != "NO POSTCODE":
                 to_geo = await geocode_postcode(gap["to_postcode"], api_key)
                 if to_geo.success and to_geo.lat and to_geo.lng:
-                    drive_time_to = calculate_drive_time_estimate(
+                    # Step 2: Get actual drive time using Directions API
+                    drive_time_to, used_api_to = await get_drive_time(
                         lead_geo.lat, lead_geo.lng,
-                        to_geo.lat, to_geo.lng
+                        to_geo.lat, to_geo.lng,
+                        api_key
                     )
+                    if used_api_to:
+                        used_directions_api = True
     
-    # Apply safety multiplier
+    # Apply safety multiplier to account for traffic/delays
     drive_time_from = int(drive_time_from * safety_mult)
     drive_time_to = int(drive_time_to * safety_mult)
     
-    # Calculate required window
+    # Calculate required window: drive_to_customer + buffer + survey + buffer + drive_to_next
     required_window = drive_time_from + buffer + survey_duration + buffer + drive_time_to
     available_gap = gap["gap_mins"]
     
@@ -551,6 +561,12 @@ async def check_viability(request: ViabilityCheckRequest):
         uses_long_drive = True
         reason = "VIABLE - Uses long drive allowance"
     
+    # Add source info to reason
+    if used_directions_api:
+        reason += " [Road-based times]"
+    else:
+        reason += " [Estimated times]"
+    
     return ViabilityResult(
         gap_id=request.gap_id,
         viable=viable,
@@ -558,6 +574,10 @@ async def check_viability(request: ViabilityCheckRequest):
         required_window_mins=required_window,
         available_gap_mins=available_gap,
         drive_time_from=drive_time_from,
+        drive_time_to=drive_time_to,
+        uses_long_drive=uses_long_drive,
+        used_directions_api=used_directions_api
+    )
         drive_time_to=drive_time_to,
         uses_long_drive=uses_long_drive
     )
