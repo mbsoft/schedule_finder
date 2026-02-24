@@ -218,7 +218,7 @@ async def geocode_postcode(postcode: str, api_key: str) -> GeocodeResult:
         )
 
 def calculate_drive_time_estimate(from_lat: float, from_lng: float, to_lat: float, to_lng: float) -> int:
-    """Estimate drive time in minutes using Haversine distance"""
+    """Estimate drive time in minutes using Haversine distance (fallback when no API)"""
     import math
     R = 3959  # Earth radius in miles
     lat1, lng1, lat2, lng2 = map(math.radians, [from_lat, from_lng, to_lat, to_lng])
@@ -230,6 +230,55 @@ def calculate_drive_time_estimate(from_lat: float, from_lng: float, to_lat: floa
     # Assume average 30 mph for UK suburban driving
     drive_time_mins = int((distance_miles / 30) * 60)
     return max(10, drive_time_mins)  # Minimum 10 mins
+
+async def get_directions_drive_time(from_lat: float, from_lng: float, to_lat: float, to_lng: float, api_key: str) -> Optional[int]:
+    """Get actual road-based drive time using NextBillion Directions API"""
+    try:
+        async with httpx.AsyncClient() as client:
+            # Use NextBillion Directions API (Fast version)
+            response = await client.get(
+                f"https://api.nextbillion.io/directions/json",
+                params={
+                    "key": api_key,
+                    "origin": f"{from_lat},{from_lng}",
+                    "destination": f"{to_lat},{to_lng}",
+                    "mode": "car"
+                },
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Extract duration from response (in seconds)
+                if data.get("routes") and len(data["routes"]) > 0:
+                    route = data["routes"][0]
+                    # Duration is in seconds, convert to minutes
+                    duration_seconds = route.get("duration", 0)
+                    duration_mins = int(duration_seconds / 60)
+                    logger.info(f"Directions API: {from_lat},{from_lng} -> {to_lat},{to_lng} = {duration_mins} mins")
+                    return max(5, duration_mins)  # Minimum 5 mins
+            
+            logger.warning(f"Directions API returned status {response.status_code}: {response.text[:200]}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Directions API error: {str(e)}")
+        return None
+
+async def get_drive_time(from_lat: float, from_lng: float, to_lat: float, to_lng: float, api_key: Optional[str]) -> tuple[int, bool]:
+    """
+    Get drive time between two points.
+    Returns: (drive_time_mins, used_directions_api)
+    """
+    if api_key:
+        # Try Directions API first for accurate road-based times
+        directions_time = await get_directions_drive_time(from_lat, from_lng, to_lat, to_lng, api_key)
+        if directions_time is not None:
+            return (directions_time, True)
+    
+    # Fallback to Haversine estimate
+    estimate = calculate_drive_time_estimate(from_lat, from_lng, to_lat, to_lng)
+    return (estimate, False)
 
 # ============== ROUTES ==============
 
