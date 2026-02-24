@@ -525,15 +525,33 @@ const ViabilityCheckView = ({ gaps, hasApiKey }) => {
       {/* Results */}
       {results.length > 0 && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <StatCard value={results.length} label="Slots Checked" icon={Target} color="#00f0ff" />
             <StatCard value={viableCount} label="Viable Slots" icon={CheckCircle} color="#d4f64d" />
             <StatCard value={results.length - viableCount} label="Rejected" icon={XCircle} color="#ff453a" />
+            <StatCard 
+              value={results.filter(r => r.used_directions_api).length > 0 ? "Road" : "Est"} 
+              label="Drive Time Source" 
+              icon={MapPin} 
+              color={results.filter(r => r.used_directions_api).length > 0 ? "#d4f64d" : "#fbbf24"} 
+            />
           </div>
 
+          {results.some(r => r.used_directions_api) && (
+            <div className="p-3 bg-[#d4f64d]/10 border border-[#d4f64d]/30 rounded-lg flex items-center gap-3">
+              <CheckCircle size={18} className="text-[#d4f64d]" />
+              <p className="text-sm text-[#d4f64d]">
+                Using real road-based drive times from NextBillion Directions API
+              </p>
+            </div>
+          )}
+
           <div className="card">
-            <div className="card-header">
+            <div className="card-header flex items-center justify-between">
               <h3 className="font-semibold">VIABILITY RESULTS FOR {postcode}</h3>
+              <span className="text-xs text-[#a1a1aa]">
+                {results.some(r => r.used_directions_api) ? "🛣️ Road-based times" : "📐 Estimated times"}
+              </span>
             </div>
             <div className="overflow-x-auto">
               <table className="data-table" data-testid="viability-results-table">
@@ -557,8 +575,14 @@ const ViabilityCheckView = ({ gaps, hasApiKey }) => {
                       </td>
                       <td className="font-mono">{result.available_gap_mins} min</td>
                       <td className="font-mono">{result.required_window_mins} min</td>
-                      <td className="font-mono">{result.drive_time_from || '—'} min</td>
-                      <td className="font-mono">{result.drive_time_to || '—'} min</td>
+                      <td className="font-mono">
+                        {result.drive_time_from || '—'} min
+                        {result.used_directions_api && <span className="ml-1 text-[#d4f64d]">🛣️</span>}
+                      </td>
+                      <td className="font-mono">
+                        {result.drive_time_to || '—'} min
+                        {result.used_directions_api && <span className="ml-1 text-[#d4f64d]">🛣️</span>}
+                      </td>
                       <td>
                         {result.viable ? (
                           <span className="badge badge-success">
