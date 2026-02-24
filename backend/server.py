@@ -121,6 +121,7 @@ class ViabilityResult(BaseModel):
     drive_time_from: Optional[int] = None
     drive_time_to: Optional[int] = None
     uses_long_drive: bool = False
+    used_directions_api: bool = False  # True if real road-based times were used
 
 class PreferenceFilterRequest(BaseModel):
     preferred_day: Optional[str] = None  # "Monday", "Friday", etc.
