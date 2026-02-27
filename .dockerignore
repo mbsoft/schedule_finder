@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.data
+terraform
+*.md
+backend_old
+frontend_old
+backend_test_old.py
+test_reports_old
+test_result_old.md
+tests_old
+.emergent_old
+memory
+design_guidelines.json
+.env.local
+.env

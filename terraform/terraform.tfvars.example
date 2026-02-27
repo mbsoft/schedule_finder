@@ -1,0 +1,4 @@
+project_id          = "your-gcp-project-id"
+region              = "europe-west2"
+service_name        = "mtll-slot-engine"
+nextbillion_api_key = ""
