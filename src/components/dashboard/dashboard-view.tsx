@@ -9,10 +9,12 @@ import {
   AlertTriangle,
   RefreshCw,
   TrendingUp,
+  Map as MapIcon,
 } from 'lucide-react';
 import type { DashboardStats, ScheduleEntry, Gap } from '@/types';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Timeline } from '@/components/dashboard/timeline';
+import { RouteMap } from '@/components/dashboard/route-map';
 
 interface DashboardViewProps {
   stats: DashboardStats;
@@ -20,6 +22,7 @@ interface DashboardViewProps {
   gaps: Gap[];
   onRefresh: () => void;
   loading: boolean;
+  hasApiKey: boolean;
 }
 
 export function DashboardView({
@@ -28,6 +31,7 @@ export function DashboardView({
   gaps,
   onRefresh,
   loading,
+  hasApiKey,
 }: DashboardViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -135,6 +139,23 @@ export function DashboardView({
               <span className="text-xs text-[#a1a1aa]">Current Time</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Route Map */}
+      <div className="card">
+        <div className="card-header">
+          <div className="flex items-center gap-3">
+            <MapIcon size={18} className="text-[#d4f64d]" />
+            <h3 className="font-semibold">ROUTE MAP</h3>
+          </div>
+        </div>
+        <div className="card-body">
+          <RouteMap
+            surveyorId="josh-001"
+            date={selectedDate}
+            hasApiKey={hasApiKey}
+          />
         </div>
       </div>
 

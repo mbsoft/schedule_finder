@@ -42,12 +42,13 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
   const daySchedule = schedule.filter((s) => s.date === date);
   const dayGaps = gaps.filter((g) => g.date === date);
 
-  // Current time indicator
+  // Current time indicator - only show for today
   const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const currentHour = now.getHours();
   const currentMin = now.getMinutes();
   const currentTimePos =
-    currentHour >= 8 && currentHour < 18
+    date === todayStr && currentHour >= 8 && currentHour < 18
       ? getPosition(`${currentHour}:${currentMin.toString().padStart(2, '0')}`)
       : null;
 
@@ -125,7 +126,11 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
     <div className="timeline-container" data-testid="timeline">
       <div className="timeline-header">
         {hours.map((hour) => (
-          <div key={hour} className="timeline-hour">
+          <div
+            key={hour}
+            className="timeline-hour"
+            style={{ left: `${((hour - 8) / 10) * 100}%` }}
+          >
             {hour.toString().padStart(2, '0')}:00
           </div>
         ))}

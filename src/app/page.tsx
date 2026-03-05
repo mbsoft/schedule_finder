@@ -142,6 +142,7 @@ export default function Page() {
             gaps={gaps}
             onRefresh={loadData}
             loading={loading}
+            hasApiKey={hasApiKey}
           />
         );
       case 'gaps':
