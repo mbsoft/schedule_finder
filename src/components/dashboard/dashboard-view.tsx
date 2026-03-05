@@ -49,7 +49,7 @@ export function DashboardView({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">DASHBOARD</h2>
-          <p className="text-sm text-[#a1a1aa]">Josh&apos;s Schedule Overview</p>
+          <p className="text-sm text-[#a1a1aa]">Schedule Overview</p>
         </div>
         <button
           className="btn btn-secondary"
@@ -103,17 +103,21 @@ export function DashboardView({
                 }`}
                 onClick={() => setSelectedDate(date)}
               >
-                {new Date(date).toLocaleDateString('en-GB', {
-                  weekday: 'short',
-                  day: 'numeric',
-                })}
+                {(() => {
+                  const [y, m, d] = date.split('-').map(Number);
+                  const dt = new Date(y, m - 1, d);
+                  return dt.toLocaleDateString('en-GB', {
+                    weekday: 'short',
+                    day: 'numeric',
+                  });
+                })()}
               </button>
             ))}
           </div>
         </div>
         <div className="card-body">
           {selectedDate && (
-            <Timeline schedule={schedule} gaps={gaps} date={selectedDate} />
+            <Timeline schedule={schedule} gaps={gaps} date={selectedDate} timezone={stats.config?.timezone} />
           )}
 
           {/* Legend */}
@@ -152,7 +156,7 @@ export function DashboardView({
         </div>
         <div className="card-body">
           <RouteMap
-            surveyorId="josh-001"
+            surveyorId="sam-001"
             date={selectedDate}
             hasApiKey={hasApiKey}
           />

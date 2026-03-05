@@ -24,6 +24,7 @@ export interface Config {
   preference_match_weight: number;
   sparse_day_priority_boost: number;
   min_conversion_gap_mins: number;
+  timezone: string;
   updated_at: string | null;
 }
 
@@ -161,4 +162,5 @@ export const DEFAULT_CONFIG: Omit<Config, 'id' | 'updated_at'> = {
   preference_match_weight: 1.2,
   sparse_day_priority_boost: 1.1,
   min_conversion_gap_mins: 90,
+  timezone: 'Europe/London',
 };

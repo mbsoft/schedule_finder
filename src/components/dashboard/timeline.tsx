@@ -7,6 +7,7 @@ interface TimelineProps {
   schedule: ScheduleEntry[];
   gaps: Gap[];
   date: string;
+  timezone?: string;
   onGapClick?: (gap: Gap) => void;
 }
 
@@ -16,7 +17,7 @@ interface TooltipData {
   y: number;
 }
 
-export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
+export function Timeline({ schedule, gaps, date, timezone = 'Europe/London', onGapClick }: TimelineProps) {
   const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00 to 18:00
   const totalMinutes = 10 * 60; // 10 hours in minutes
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
@@ -42,11 +43,12 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
   const daySchedule = schedule.filter((s) => s.date === date);
   const dayGaps = gaps.filter((g) => g.date === date);
 
-  // Current time indicator - only show for today
+  // Current time indicator - only show for today in the configured timezone
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const currentHour = now.getHours();
-  const currentMin = now.getMinutes();
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const todayStr = fmt.format(now); // YYYY-MM-DD
+  const timeFmt = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false });
+  const [currentHour, currentMin] = timeFmt.format(now).split(':').map(Number);
   const currentTimePos =
     date === todayStr && currentHour >= 8 && currentHour < 18
       ? getPosition(`${currentHour}:${currentMin.toString().padStart(2, '0')}`)

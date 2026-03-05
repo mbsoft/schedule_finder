@@ -1,9 +1,97 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Key, Settings, Loader2, User } from 'lucide-react';
+import { Key, Settings, Loader2, User, Globe, ChevronDown } from 'lucide-react';
 import type { Config, Surveyor } from '@/types';
+
+const ALL_TIMEZONES = Intl.supportedValuesOf('timeZone');
+
+function TimezoneDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (tz: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!search) return ALL_TIMEZONES;
+    const q = search.toLowerCase();
+    return ALL_TIMEZONES.filter((tz) => tz.toLowerCase().includes(q));
+  }, [search]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative max-w-sm">
+      <button
+        type="button"
+        className="form-input w-full text-left flex items-center justify-between gap-2"
+        onClick={() => {
+          setOpen(!open);
+          setSearch('');
+        }}
+      >
+        <span>{value}</span>
+        <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-[#18181b] border border-[#27272a] rounded-lg shadow-xl max-h-60 overflow-hidden">
+          <div className="p-2 border-b border-[#27272a]">
+            <input
+              ref={inputRef}
+              type="text"
+              className="form-input w-full text-sm"
+              placeholder="Search timezones..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <ul className="overflow-y-auto max-h-48">
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-sm text-[#a1a1aa]">No matches</li>
+            )}
+            {filtered.map((tz) => (
+              <li key={tz}>
+                <button
+                  type="button"
+                  className={`w-full text-left px-3 py-1.5 text-sm hover:bg-[#27272a] ${
+                    tz === value ? 'text-[#d4f64d]' : 'text-[#fafafa]'
+                  }`}
+                  onClick={() => {
+                    onChange(tz);
+                    setOpen(false);
+                  }}
+                >
+                  {tz}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ConfigurationViewProps {
   config: Config;
@@ -193,6 +281,25 @@ export function ConfigurationView({
           </div>
         </div>
       )}
+
+      {/* Timezone */}
+      <div className="card">
+        <div className="card-header">
+          <div className="flex items-center gap-3">
+            <Globe size={18} className="text-[#d4f64d]" />
+            <h3 className="font-semibold">TIMEZONE</h3>
+          </div>
+        </div>
+        <div className="card-body">
+          <TimezoneDropdown
+            value={localConfig.timezone || 'Europe/London'}
+            onChange={(tz) => updateConfig('timezone', tz)}
+          />
+          <p className="text-xs text-[#a1a1aa] mt-2">
+            All schedule dates, gap calculations, and time displays use this timezone.
+          </p>
+        </div>
+      </div>
 
       {/* Franchise Operations */}
       <div className="card">

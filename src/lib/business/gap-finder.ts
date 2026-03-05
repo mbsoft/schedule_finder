@@ -2,6 +2,7 @@ import type { Gap } from '@/types';
 import { getConfig } from '@/lib/storage/data-access';
 import { getSurveyor, getSchedule, saveGaps } from '@/lib/storage/data-access';
 import { timeToMinutes, minutesToTime } from './time-utils';
+import { formatDateInTimezone, weekdayInTimezone } from './timezone';
 import { randomUUID } from 'crypto';
 
 export async function findGaps(surveyorId: string): Promise<Gap[]> {
@@ -29,16 +30,17 @@ export async function findGaps(surveyorId: string): Promise<Gap[]> {
     scheduleByDate[entry.date].push(entry);
   }
 
-  // Generate dates for booking window
+  // Generate dates for booking window using configured timezone
+  const tz = config.timezone || 'Europe/London';
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setHours(12, 0, 0, 0); // Noon to avoid DST edge cases
 
   for (let dayOffset = 0; dayOffset < config.booking_window_days; dayOffset++) {
     const checkDate = new Date(today);
     checkDate.setDate(checkDate.getDate() + dayOffset);
 
-    const dateStr = checkDate.toISOString().split('T')[0];
-    const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const dateStr = formatDateInTimezone(checkDate, tz);
+    const dayName = weekdayInTimezone(checkDate, tz);
 
     // Skip weekends if not available
     if (!config.weekends_available && (dayName === 'Saturday' || dayName === 'Sunday')) {

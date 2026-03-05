@@ -5,17 +5,17 @@ import {
   saveSurveyors,
   saveScheduleEntries,
 } from '@/lib/storage/data-access';
+import { formatDateInTimezone } from '@/lib/business/timezone';
 import { randomUUID } from 'crypto';
 
 export async function seedData(): Promise<void> {
   // Clear existing data
   await clearAllData();
 
-  // Create default config (will be auto-created on first getConfig call)
-  await getConfig();
+  const config = await getConfig();
+  const tz = config.timezone || 'Europe/London';
 
-  // Create Josh surveyor
-  const josh: Surveyor = {
+  const surveyor: Surveyor = {
     id: 'sam-001',
     name: 'Surveyor Sam',
     home_postcode: 'B15 2TT',
@@ -29,14 +29,19 @@ export async function seedData(): Promise<void> {
     max_jobs_per_day: 5,
     active: true,
   };
-  await saveSurveyors([josh]);
+  await saveSurveyors([surveyor]);
 
-  // Seed Josh's schedule
+  // Anchor schedule to the next Monday (or today if Monday)
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setHours(12, 0, 0, 0); // Noon to avoid DST edge cases
+  const todayDay = today.getDay(); // 0=Sun, 1=Mon, ...
+  const daysUntilMonday = todayDay === 0 ? 1 : todayDay === 1 ? 0 : 8 - todayDay;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() + daysUntilMonday);
 
+  // Offsets are from the anchor Monday (0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 7=next Mon, ...)
   const scheduleTemplate = [
-    // Day 1 - Monday - Dense day
+    // Week 1 - Monday - Dense day
     {
       offset: 0, day: 'Monday', entries: [
         { start: '08:30', end: '10:00', postcode: 'B15 2QH', type: 'Survey', area: 'Birmingham Central' },
@@ -45,7 +50,7 @@ export async function seedData(): Promise<void> {
         { start: '15:30', end: '17:00', postcode: 'B29 6NQ', type: 'Survey', area: 'Selly Oak' },
       ],
     },
-    // Day 2 - Tuesday - Moderate day
+    // Week 1 - Tuesday - Moderate day
     {
       offset: 1, day: 'Tuesday', entries: [
         { start: '09:00', end: '10:30', postcode: 'WS1 2EN', type: 'Survey', area: 'Walsall' },
@@ -53,14 +58,14 @@ export async function seedData(): Promise<void> {
         { start: '15:00', end: '16:30', postcode: 'WV1 1ST', type: 'Survey', area: 'Wolverhampton' },
       ],
     },
-    // Day 3 - Wednesday - Sparse day
+    // Week 1 - Wednesday - Sparse day
     {
       offset: 2, day: 'Wednesday', entries: [
         { start: '10:00', end: '11:30', postcode: 'B23 6TL', type: 'Survey', area: 'Erdington' },
         { start: '14:00', end: '15:30', postcode: 'B24 9PP', type: 'Survey', area: 'Erdington North' },
       ],
     },
-    // Day 4 - Thursday - Moderate day with block
+    // Week 1 - Thursday - Moderate day with block
     {
       offset: 3, day: 'Thursday', entries: [
         { start: '08:30', end: '10:00', postcode: 'B31 2PA', type: 'Survey', area: 'Northfield' },
@@ -68,7 +73,7 @@ export async function seedData(): Promise<void> {
         { start: '13:30', end: '15:00', postcode: 'NO POSTCODE', type: 'BLOCK', area: 'Personal', notes: 'Doctor appointment' },
       ],
     },
-    // Day 5 - Friday - Light day
+    // Week 1 - Friday - Light day
     {
       offset: 4, day: 'Friday', entries: [
         { start: '09:30', end: '11:00', postcode: 'B44 8NU', type: 'Survey', area: 'Perry Barr' },
@@ -116,14 +121,10 @@ export async function seedData(): Promise<void> {
   const allEntries: ScheduleEntry[] = [];
 
   for (const dayData of scheduleTemplate) {
-    const date = new Date(today);
-    date.setDate(date.getDate() + dayData.offset);
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + dayData.offset);
 
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    // Skip weekends
-    if (dayName === 'Saturday' || dayName === 'Sunday') continue;
-
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateInTimezone(date, tz);
 
     for (const entry of dayData.entries) {
       allEntries.push({

@@ -39,12 +39,12 @@ export default function Page() {
       const [statsData, scheduleData, configData, apiKeyData, surveyorData] =
         await Promise.all([
           apiGet<DashboardStats>('/dashboard-stats', {
-            surveyor_id: 'josh-001',
+            surveyor_id: 'sam-001',
           }),
-          apiGet<ScheduleEntry[]>('/schedule', { surveyor_id: 'josh-001' }),
+          apiGet<ScheduleEntry[]>('/schedule', { surveyor_id: 'sam-001' }),
           apiGet<Config>('/config'),
           apiGet<{ has_key: boolean }>('/api-key/status'),
-          apiGet<Surveyor>('/surveyors/josh-001'),
+          apiGet<Surveyor>('/surveyors/sam-001'),
         ]);
 
       setStats(statsData);
@@ -55,7 +55,7 @@ export default function Page() {
 
       // Load gaps
       const gapsData = await apiGet<Gap[]>('/gaps', {
-        surveyor_id: 'josh-001',
+        surveyor_id: 'sam-001',
       });
       setGaps(gapsData);
     } catch (error) {
@@ -110,7 +110,7 @@ export default function Page() {
     setLoading(true);
     try {
       const gapsData = await apiGet<Gap[]>('/gaps', {
-        surveyor_id: 'josh-001',
+        surveyor_id: 'sam-001',
       });
       setGaps(gapsData);
       toast.success('Gaps recalculated');
