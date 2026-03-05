@@ -111,7 +111,6 @@ export async function saveGaps(surveyorId: string, gaps: Gap[]): Promise<void> {
 export async function clearAllData(): Promise<void> {
   const storage = getStorage();
   await storage.delete(PATHS.config);
-  await storage.delete(PATHS.apiKeys);
   await storage.delete(PATHS.surveyors);
   await storage.delete(PATHS.schedule);
 }
