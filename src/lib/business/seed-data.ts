@@ -16,8 +16,8 @@ export async function seedData(): Promise<void> {
 
   // Create Josh surveyor
   const josh: Surveyor = {
-    id: 'josh-001',
-    name: 'Josh',
+    id: 'sam-001',
+    name: 'Surveyor Sam',
     home_postcode: 'B15 2TT',
     home_lat: null,
     home_lng: null,
@@ -128,7 +128,7 @@ export async function seedData(): Promise<void> {
     for (const entry of dayData.entries) {
       allEntries.push({
         id: randomUUID(),
-        surveyor_id: 'josh-001',
+        surveyor_id: 'sam-001',
         date: dateStr,
         day_name: dayData.day,
         start_time: entry.start,
