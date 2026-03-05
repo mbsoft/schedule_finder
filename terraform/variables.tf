@@ -15,6 +15,12 @@ variable "service_name" {
   default     = "mtll-slot-engine"
 }
 
+variable "image_tag" {
+  description = "Docker image tag (git short hash). Defaults to 'latest'."
+  type        = string
+  default     = "latest"
+}
+
 variable "nextbillion_api_key" {
   description = "NextBillion.ai API key for geocoding"
   type        = string

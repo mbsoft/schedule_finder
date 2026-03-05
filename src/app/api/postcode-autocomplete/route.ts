@@ -43,15 +43,17 @@ export async function GET(request: Request) {
     if (response.ok) {
       const data = await response.json();
       if (data.items?.length > 0) {
-        const suggestions = data.items.map((item: AutocompleteItem) => ({
-          postcode: item.address?.postalCode || '',
-          title: item.title || '',
-          label: item.address?.label || '',
-          city: item.address?.city || '',
-          county: item.address?.county || '',
-          lat: item.position?.lat ?? null,
-          lng: item.position?.lng ?? null,
-        }));
+        const suggestions = data.items
+          .filter((item: AutocompleteItem) => item.address?.postalCode)
+          .map((item: AutocompleteItem) => ({
+            postcode: item.address!.postalCode!,
+            title: item.title || '',
+            label: item.address?.label || '',
+            city: item.address?.city || '',
+            county: item.address?.county || '',
+            lat: item.position?.lat ?? null,
+            lng: item.position?.lng ?? null,
+          }));
         return NextResponse.json(suggestions);
       }
     }

@@ -66,17 +66,23 @@ Terraform outputs the service URL, bucket name, registry URL, and service accoun
 
 ## Step 2: Build and Push Docker Image
 
+Images are tagged with the git short hash for traceability, plus `latest` as a convenience alias.
+
 ```bash
 # Get registry URL from Terraform output
 REGISTRY=$(cd terraform && terraform output -raw artifact_registry)
+GIT_SHA=$(git rev-parse --short HEAD)
 
 # Authenticate Docker with Artifact Registry
 gcloud auth configure-docker europe-west2-docker.pkg.dev
 
-# Build the image
-docker build --platform linux/amd64 -t ${REGISTRY}/mtll-slot-engine:latest .
+# Build and tag with git hash + latest
+docker build --platform linux/amd64 \
+  -t ${REGISTRY}/mtll-slot-engine:${GIT_SHA} \
+  -t ${REGISTRY}/mtll-slot-engine:latest .
 
-# Push to Artifact Registry
+# Push both tags
+docker push ${REGISTRY}/mtll-slot-engine:${GIT_SHA}
 docker push ${REGISTRY}/mtll-slot-engine:latest
 ```
 
@@ -87,18 +93,15 @@ The Dockerfile uses a multi-stage build:
 
 ## Step 3: Deploy to Cloud Run
 
-After the first `terraform apply`, Cloud Run will pull the `:latest` image. For subsequent deploys:
+Pass the git hash as the `image_tag` variable so Terraform deploys the exact revision:
 
 ```bash
-# Rebuild and push the image (Step 2), then:
-SERVICE_NAME=$(cd terraform && terraform output -raw service_url | sed 's|https://||' | cut -d- -f1-3)
+GIT_SHA=$(git rev-parse --short HEAD)
 
-gcloud run services update mtll-slot-engine \
-  --region europe-west2 \
-  --image ${REGISTRY}/mtll-slot-engine:latest
+terraform apply -var="image_tag=${GIT_SHA}"
 ```
 
-Or re-run `terraform apply` which will pick up the new image.
+This ensures Cloud Run runs the image matching the committed code. The `image_tag` variable defaults to `latest` if not specified.
 
 ## Step 4: Seed Initial Data
 
@@ -141,17 +144,21 @@ Cloud Run is configured with:
 ## Updating the Deployment
 
 ```bash
-# 1. Make changes locally and test
+# 1. Make changes locally, test, and commit
 npm run dev
+git add . && git commit -m "your changes"
 
-# 2. Build and push new image
-docker build --platform linux/amd64 -t ${REGISTRY}/mtll-slot-engine:latest .
+# 2. Build and push new image tagged with git hash
+REGISTRY=$(cd terraform && terraform output -raw artifact_registry)
+GIT_SHA=$(git rev-parse --short HEAD)
+docker build --platform linux/amd64 \
+  -t ${REGISTRY}/mtll-slot-engine:${GIT_SHA} \
+  -t ${REGISTRY}/mtll-slot-engine:latest .
+docker push ${REGISTRY}/mtll-slot-engine:${GIT_SHA}
 docker push ${REGISTRY}/mtll-slot-engine:latest
 
-# 3. Deploy new revision
-gcloud run services update mtll-slot-engine \
-  --region europe-west2 \
-  --image ${REGISTRY}/mtll-slot-engine:latest
+# 3. Deploy new revision via Terraform
+cd terraform && terraform apply -var="image_tag=${GIT_SHA}"
 ```
 
 ## Cost Considerations
