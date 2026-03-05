@@ -10,6 +10,7 @@ import type {
   Gap,
   Config,
   ApiKeyData,
+  Surveyor,
 } from '@/types';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
@@ -29,12 +30,13 @@ export default function Page() {
   const [gaps, setGaps] = useState<Gap[]>([]);
   const [config, setConfig] = useState<Config>({} as Config);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [surveyor, setSurveyor] = useState<Surveyor | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
       // Load all data in parallel
-      const [statsData, scheduleData, configData, apiKeyData] =
+      const [statsData, scheduleData, configData, apiKeyData, surveyorData] =
         await Promise.all([
           apiGet<DashboardStats>('/dashboard-stats', {
             surveyor_id: 'josh-001',
@@ -42,12 +44,14 @@ export default function Page() {
           apiGet<ScheduleEntry[]>('/schedule', { surveyor_id: 'josh-001' }),
           apiGet<Config>('/config'),
           apiGet<{ has_key: boolean }>('/api-key/status'),
+          apiGet<Surveyor>('/surveyors/josh-001'),
         ]);
 
       setStats(statsData);
       setSchedule(scheduleData);
       setConfig(configData);
       setHasApiKey(apiKeyData.has_key);
+      setSurveyor(surveyorData);
 
       // Load gaps
       const gapsData = await apiGet<Gap[]>('/gaps', {
@@ -80,6 +84,16 @@ export default function Page() {
       setConfig(newConfig);
     } catch (error) {
       toast.error('Failed to save configuration');
+    }
+  };
+
+  const saveSurveyor = async (updates: Partial<Surveyor>) => {
+    if (!surveyor) return;
+    try {
+      const updated = await apiPut<Surveyor>(`/surveyors/${surveyor.id}`, updates);
+      setSurveyor(updated);
+    } catch (error) {
+      toast.error('Failed to save surveyor settings');
     }
   };
 
@@ -151,6 +165,8 @@ export default function Page() {
             onSave={saveConfig}
             hasApiKey={hasApiKey}
             onSaveApiKey={saveApiKey}
+            surveyor={surveyor}
+            onSaveSurveyor={saveSurveyor}
           />
         );
       default:
@@ -160,7 +176,7 @@ export default function Page() {
 
   return (
     <div className="App" data-testid="app-container">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} surveyorName={surveyor?.name} />
 
       <main className="main-content">
         <Header activeTab={activeTab} hasApiKey={hasApiKey} />

@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Key, Settings, Loader2 } from 'lucide-react';
-import type { Config } from '@/types';
+import { Key, Settings, Loader2, User } from 'lucide-react';
+import type { Config, Surveyor } from '@/types';
 
 interface ConfigurationViewProps {
   config: Config;
   onSave: (config: Config) => Promise<void>;
   hasApiKey: boolean;
   onSaveApiKey: (key: string) => Promise<void>;
+  surveyor: Surveyor | null;
+  onSaveSurveyor: (updates: Partial<Surveyor>) => Promise<void>;
 }
 
 export function ConfigurationView({
@@ -17,14 +19,28 @@ export function ConfigurationView({
   onSave,
   hasApiKey,
   onSaveApiKey,
+  surveyor,
+  onSaveSurveyor,
 }: ConfigurationViewProps) {
   const [localConfig, setLocalConfig] = useState<Config>(config);
   const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
+  const [localSurveyor, setLocalSurveyor] = useState<Partial<Surveyor>>({});
+  const [savingSurveyor, setSavingSurveyor] = useState(false);
 
   useEffect(() => {
     setLocalConfig(config);
   }, [config]);
+
+  useEffect(() => {
+    if (surveyor) {
+      setLocalSurveyor({
+        name: surveyor.name,
+        home_postcode: surveyor.home_postcode,
+        max_jobs_per_day: surveyor.max_jobs_per_day,
+      });
+    }
+  }, [surveyor]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -41,6 +57,13 @@ export function ConfigurationView({
     await onSaveApiKey(apiKey);
     setApiKey('');
     toast.success('API key saved');
+  };
+
+  const handleSaveSurveyor = async () => {
+    setSavingSurveyor(true);
+    await onSaveSurveyor(localSurveyor);
+    setSavingSurveyor(false);
+    toast.success('Surveyor settings saved');
   };
 
   const updateConfig = (key: keyof Config, value: string | number | boolean) => {
@@ -96,6 +119,80 @@ export function ConfigurationView({
           </p>
         </div>
       </div>
+
+      {/* Surveyor Settings */}
+      {surveyor && (
+        <div className="card">
+          <div className="card-header">
+            <div className="flex items-center gap-3">
+              <User size={18} className="text-[#d4f64d]" />
+              <h3 className="font-semibold">SURVEYOR SETTINGS</h3>
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="form-group">
+                <label className="form-label">Surveyor Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={localSurveyor.name || ''}
+                  onChange={(e) =>
+                    setLocalSurveyor((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  data-testid="surveyor-name-input"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Home Postcode</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. B15 2TT"
+                  value={localSurveyor.home_postcode || ''}
+                  onChange={(e) =>
+                    setLocalSurveyor((prev) => ({
+                      ...prev,
+                      home_postcode: e.target.value.toUpperCase(),
+                    }))
+                  }
+                  data-testid="surveyor-home-postcode-input"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Max Jobs / Day</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={localSurveyor.max_jobs_per_day || 5}
+                  onChange={(e) =>
+                    setLocalSurveyor((prev) => ({
+                      ...prev,
+                      max_jobs_per_day: parseInt(e.target.value),
+                    }))
+                  }
+                  data-testid="surveyor-max-jobs-input"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                className="btn btn-primary"
+                onClick={handleSaveSurveyor}
+                disabled={savingSurveyor}
+                data-testid="save-surveyor-btn"
+              >
+                {savingSurveyor ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <User size={16} />
+                )}
+                Save Surveyor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Franchise Operations */}
       <div className="card">

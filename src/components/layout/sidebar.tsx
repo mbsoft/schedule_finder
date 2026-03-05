@@ -14,9 +14,10 @@ type TabId = 'dashboard' | 'gaps' | 'viability' | 'preferences' | 'config';
 interface SidebarProps {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  surveyorName?: string;
 }
 
-export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, surveyorName }: SidebarProps) {
   const navItems: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'gaps', label: 'Gap Finder', icon: Target },
@@ -43,11 +44,11 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         <div className="flex items-center gap-3 p-3 bg-[#27272a] rounded-lg mb-6">
           <img
             src="https://images.pexels.com/photos/3776969/pexels-photo-3776969.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=100&w=100"
-            alt="Josh"
+            alt={surveyorName || 'Josh'}
             className="w-10 h-10 rounded-full object-cover"
           />
           <div>
-            <p className="font-medium text-sm">Josh</p>
+            <p className="font-medium text-sm">{surveyorName || 'Josh'}</p>
             <p className="text-xs text-[#a1a1aa]">Active Surveyor</p>
           </div>
         </div>
