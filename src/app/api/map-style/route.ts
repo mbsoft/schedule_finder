@@ -54,7 +54,11 @@ export async function GET(request: Request) {
     const styleJson = JSON.parse(fixedText);
 
     // Rewrite all NB URLs to absolute local proxy URLs (removes API key from client)
-    const { origin } = new URL(request.url);
+    // Use forwarded headers for the public origin (Cloud Run sets X-Forwarded-Host/Proto)
+    const headers = new Headers(request.headers);
+    const host = headers.get('x-forwarded-host') || headers.get('host') || new URL(request.url).host;
+    const proto = headers.get('x-forwarded-proto') || 'https';
+    const origin = `${proto}://${host}`;
     const rewritten = rewriteUrls(styleJson, origin);
     return NextResponse.json(rewritten);
   } catch (e) {
