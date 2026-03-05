@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { ScheduleEntry, Gap } from '@/types';
 
 interface TimelineProps {
@@ -9,9 +10,16 @@ interface TimelineProps {
   onGapClick?: (gap: Gap) => void;
 }
 
+interface TooltipData {
+  content: React.ReactNode;
+  x: number;
+  y: number;
+}
+
 export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
   const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 08:00 to 18:00
   const totalMinutes = 10 * 60; // 10 hours in minutes
+  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
 
   const getPosition = (time: string): number => {
     const [h, m] = time.split(':').map(Number);
@@ -25,6 +33,12 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
     return endPos - startPos;
   };
 
+  const showTooltip = (e: React.MouseEvent, content: React.ReactNode) => {
+    setTooltip({ content, x: e.clientX, y: e.clientY });
+  };
+
+  const hideTooltip = () => setTooltip(null);
+
   const daySchedule = schedule.filter((s) => s.date === date);
   const dayGaps = gaps.filter((g) => g.date === date);
 
@@ -36,6 +50,76 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
     currentHour >= 8 && currentHour < 18
       ? getPosition(`${currentHour}:${currentMin.toString().padStart(2, '0')}`)
       : null;
+
+  const renderScheduleTooltip = (entry: ScheduleEntry) => (
+    <div className="space-y-1">
+      <div className="font-bold text-[#fafafa]">
+        {entry.job_type === 'BLOCK' ? 'BLOCKED' : entry.job_type}
+      </div>
+      <div className="flex justify-between gap-4">
+        <span className="text-[#a1a1aa]">Time</span>
+        <span className="font-mono">{entry.start_time} – {entry.end_time}</span>
+      </div>
+      {entry.postcode && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">Postcode</span>
+          <span className="font-mono">{entry.postcode}</span>
+        </div>
+      )}
+      {entry.area && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">Area</span>
+          <span>{entry.area}</span>
+        </div>
+      )}
+      {entry.notes && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">Notes</span>
+          <span>{entry.notes}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderGapTooltip = (gap: Gap) => (
+    <div className="space-y-1">
+      <div className="font-bold text-[#fafafa]">
+        {gap.gap_type === 'STRONG' ? 'STRONG GAP' : 'TIGHT GAP'}
+      </div>
+      <div className="flex justify-between gap-4">
+        <span className="text-[#a1a1aa]">Window</span>
+        <span className="font-mono">{gap.gap_start} – {gap.gap_end}</span>
+      </div>
+      <div className="flex justify-between gap-4">
+        <span className="text-[#a1a1aa]">Duration</span>
+        <span className="font-mono">{gap.gap_mins} min</span>
+      </div>
+      {gap.from_postcode && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">From</span>
+          <span className="font-mono">{gap.from_postcode}</span>
+        </div>
+      )}
+      {gap.to_postcode && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">To</span>
+          <span className="font-mono">{gap.to_postcode}</span>
+        </div>
+      )}
+      {gap.classification && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">Class</span>
+          <span>{gap.classification}</span>
+        </div>
+      )}
+      {gap.notes && (
+        <div className="flex justify-between gap-4">
+          <span className="text-[#a1a1aa]">Notes</span>
+          <span>{gap.notes}</span>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="timeline-container" data-testid="timeline">
@@ -74,7 +158,9 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
               left: `${getPosition(entry.start_time)}%`,
               width: `${getWidth(entry.start_time, entry.end_time)}%`,
             }}
-            title={`${entry.start_time}-${entry.end_time}: ${entry.area || entry.postcode}`}
+            onMouseEnter={(e) => showTooltip(e, renderScheduleTooltip(entry))}
+            onMouseMove={(e) => showTooltip(e, renderScheduleTooltip(entry))}
+            onMouseLeave={hideTooltip}
           >
             <span className="truncate text-xs">
               {entry.job_type === 'BLOCK' ? 'BLOCKED' : entry.area || entry.postcode}
@@ -92,12 +178,27 @@ export function Timeline({ schedule, gaps, date, onGapClick }: TimelineProps) {
               width: `${getWidth(gap.gap_start, gap.gap_end)}%`,
             }}
             onClick={() => onGapClick?.(gap)}
-            title={`Gap: ${gap.gap_start}-${gap.gap_end} (${gap.gap_mins}min)`}
+            onMouseEnter={(e) => showTooltip(e, renderGapTooltip(gap))}
+            onMouseMove={(e) => showTooltip(e, renderGapTooltip(gap))}
+            onMouseLeave={hideTooltip}
           >
             <span className="truncate text-xs">{gap.gap_mins}min</span>
           </div>
         ))}
       </div>
+
+      {/* Tooltip rendered outside the row to avoid overflow clipping */}
+      {tooltip && (
+        <div
+          className="timeline-tooltip"
+          style={{
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+          }}
+        >
+          {tooltip.content}
+        </div>
+      )}
     </div>
   );
 }

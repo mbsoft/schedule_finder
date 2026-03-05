@@ -150,6 +150,11 @@ input:focus, select:focus, textarea:focus {
 }
 
 .card-body { padding: 20px; }
+.card-overflow-visible { overflow: visible; }
+
+/* Postcode autocomplete */
+.postcode-autocomplete-wrapper { position: relative; z-index: 100; }
+.postcode-autocomplete-dropdown { z-index: 9999; }
 
 /* Timeline */
 .timeline-container { position: relative; overflow-x: auto; padding: 20px 0; }
@@ -212,6 +217,25 @@ input:focus, select:focus, textarea:focus {
     width: 10px; height: 10px;
     background: hsl(var(--accent)); border-radius: 50%;
     box-shadow: 0 0 10px hsl(var(--accent));
+}
+
+/* Timeline tooltip */
+.timeline-tooltip {
+    position: fixed;
+    z-index: 9999;
+    transform: translate(-50%, -100%);
+    margin-top: -12px;
+    min-width: 200px;
+    max-width: 280px;
+    padding: 10px 14px;
+    background: #09090b;
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    font-size: 12px;
+    color: #fafafa;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 /* Status badges */

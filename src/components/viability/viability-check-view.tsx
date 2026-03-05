@@ -14,6 +14,7 @@ import {
 import type { Gap, BulkViabilityResult } from '@/types';
 import { apiPost } from '@/lib/api-client';
 import { StatCard } from '@/components/dashboard/stat-card';
+import { PostcodeAutocomplete } from './postcode-autocomplete';
 
 interface ViabilityCheckViewProps {
   gaps: Gap[];
@@ -59,7 +60,7 @@ export function ViabilityCheckView({ gaps, hasApiKey }: ViabilityCheckViewProps)
       </div>
 
       {/* Input Section */}
-      <div className="card">
+      <div className="card card-overflow-visible">
         <div className="card-header">
           <div className="flex items-center gap-3">
             <MapPin size={18} className="text-[#d4f64d]" />
@@ -69,12 +70,9 @@ export function ViabilityCheckView({ gaps, hasApiKey }: ViabilityCheckViewProps)
         <div className="card-body">
           <div className="flex gap-4">
             <div className="flex-1">
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Enter UK postcode (e.g., B15 2TT)"
+              <PostcodeAutocomplete
                 value={postcode}
-                onChange={(e) => setPostcode(e.target.value.toUpperCase())}
+                onChange={setPostcode}
                 data-testid="postcode-input"
               />
             </div>
