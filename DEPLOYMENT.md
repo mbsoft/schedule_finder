@@ -57,7 +57,7 @@ terraform apply
 
 This creates:
 - **Artifact Registry** repository for Docker images
-- **Cloud Run** service (europe-west2, 1 CPU / 512MB, scales 0-3)
+- **Cloud Run** service (us-central1, 1 CPU / 512MB, scales 0-3)
 - **GCS bucket** with versioning (keeps 5 versions) for data persistence
 - **Service account** with `storage.objectAdmin` on the bucket
 - **Public access** via `allUsers` invoker IAM binding
@@ -74,7 +74,7 @@ REGISTRY=$(cd terraform && terraform output -raw artifact_registry)
 GIT_SHA=$(git rev-parse --short HEAD)
 
 # Authenticate Docker with Artifact Registry
-gcloud auth configure-docker europe-west2-docker.pkg.dev
+gcloud auth configure-docker us-central1-docker.pkg.dev
 
 # Build and tag with git hash + latest
 docker build --platform linux/amd64 \
