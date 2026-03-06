@@ -25,6 +25,7 @@ export interface Config {
   sparse_day_priority_boost: number;
   min_conversion_gap_mins: number;
   timezone: string;
+  units: 'metric' | 'imperial';
   updated_at: string | null;
 }
 
@@ -163,4 +164,5 @@ export const DEFAULT_CONFIG: Omit<Config, 'id' | 'updated_at'> = {
   sparse_day_priority_boost: 1.1,
   min_conversion_gap_mins: 90,
   timezone: 'Europe/London',
+  units: 'metric',
 };

@@ -159,6 +159,7 @@ export function DashboardView({
             surveyorId="sam-001"
             date={selectedDate}
             hasApiKey={hasApiKey}
+            units={stats.config?.units}
           />
         </div>
       </div>

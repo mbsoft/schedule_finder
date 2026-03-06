@@ -126,6 +126,19 @@ export function ConfigurationView({
     setLocalConfig((prev) => ({ ...prev, [key]: value }));
   };
 
+  const isMetric = localConfig.units === 'metric';
+  const distUnit = isMetric ? 'km' : 'miles';
+
+  // Display a stored miles value in the current unit
+  const displayDist = (miles: number) =>
+    isMetric ? parseFloat((miles * 1.60934).toFixed(1)) : miles;
+
+  // Parse a displayed value back to miles for storage
+  const parseDist = (displayed: string) => {
+    const v = parseFloat(displayed);
+    return isMetric ? parseFloat((v / 1.60934).toFixed(4)) : v;
+  };
+
   return (
     <div className="space-y-6 animate-slide-in" data-testid="configuration-view">
       <div>
@@ -250,22 +263,47 @@ export function ConfigurationView({
         </div>
       )}
 
-      {/* Timezone */}
+      {/* Timezone & Units */}
       <div className="card">
         <div className="card-header">
           <div className="flex items-center gap-3">
             <Globe size={18} className="text-[#d4f64d]" />
-            <h3 className="font-semibold">TIMEZONE</h3>
+            <h3 className="font-semibold">REGIONAL SETTINGS</h3>
           </div>
         </div>
-        <div className="card-body">
-          <TimezoneInput
-            value={localConfig.timezone || 'Europe/London'}
-            onChange={(tz) => updateConfig('timezone', tz)}
-          />
-          <p className="text-xs text-[#a1a1aa] mt-2">
-            All schedule dates, gap calculations, and time displays use this timezone.
-          </p>
+        <div className="card-body space-y-4">
+          <div>
+            <label className="form-label">Timezone</label>
+            <TimezoneInput
+              value={localConfig.timezone || 'Europe/London'}
+              onChange={(tz) => updateConfig('timezone', tz)}
+            />
+            <p className="text-xs text-[#a1a1aa] mt-1">
+              All schedule dates, gap calculations, and time displays use this timezone.
+            </p>
+          </div>
+          <div>
+            <label className="form-label">Units of Measure</label>
+            <div className="flex gap-2 max-w-sm">
+              <button
+                type="button"
+                className={`flex-1 btn ${localConfig.units === 'metric' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateConfig('units', 'metric')}
+              >
+                Metric (km)
+              </button>
+              <button
+                type="button"
+                className={`flex-1 btn ${localConfig.units === 'imperial' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => updateConfig('units', 'imperial')}
+              >
+                Imperial (miles)
+              </button>
+            </div>
+            <p className="text-xs text-[#a1a1aa] mt-1">
+              Distances are shown in kilometres or miles throughout the app.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -392,6 +430,42 @@ export function ConfigurationView({
                   'drive_time_safety_mult',
                   parseFloat(e.target.value)
                 )
+              }
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Nearby Threshold ({distUnit})</label>
+            <input
+              type="number"
+              step="0.1"
+              className="form-input"
+              value={displayDist(localConfig.nearby_miles_threshold || 10)}
+              onChange={(e) =>
+                updateConfig('nearby_miles_threshold', parseDist(e.target.value))
+              }
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Medium Threshold ({distUnit})</label>
+            <input
+              type="number"
+              step="0.1"
+              className="form-input"
+              value={displayDist(localConfig.medium_miles_threshold || 20)}
+              onChange={(e) =>
+                updateConfig('medium_miles_threshold', parseDist(e.target.value))
+              }
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Long Threshold ({distUnit})</label>
+            <input
+              type="number"
+              step="0.1"
+              className="form-input"
+              value={displayDist(localConfig.long_miles_threshold || 30)}
+              onChange={(e) =>
+                updateConfig('long_miles_threshold', parseDist(e.target.value))
               }
             />
           </div>

@@ -24,6 +24,7 @@ interface RouteMapProps {
   surveyorId: string;
   date: string | null;
   hasApiKey: boolean;
+  units?: 'metric' | 'imperial';
 }
 
 // Decode Google-style encoded polyline to coordinate array
@@ -65,7 +66,7 @@ function decodePolyline(encoded: string): [number, number][] {
   return coords;
 }
 
-export function RouteMap({ surveyorId, date, hasApiKey }: RouteMapProps) {
+export function RouteMap({ surveyorId, date, hasApiKey, units = 'metric' }: RouteMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -288,7 +289,11 @@ export function RouteMap({ surveyorId, date, hasApiKey }: RouteMapProps) {
             Total drive: <span className="font-mono text-[#fafafa]">{Math.round(routeData.duration_seconds / 60)} min</span>
           </span>
           <span>
-            Distance: <span className="font-mono text-[#fafafa]">{(routeData.distance_meters / 1609.34).toFixed(1)} miles</span>
+            Distance: <span className="font-mono text-[#fafafa]">
+              {units === 'metric'
+                ? `${(routeData.distance_meters / 1000).toFixed(1)} km`
+                : `${(routeData.distance_meters / 1609.34).toFixed(1)} miles`}
+            </span>
           </span>
           <span>
             Stops: <span className="font-mono text-[#fafafa]">{routeData.waypoints.filter(w => w.type === 'job').length}</span>

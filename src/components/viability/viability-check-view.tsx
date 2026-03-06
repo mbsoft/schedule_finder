@@ -37,7 +37,7 @@ export function ViabilityCheckView({ gaps, hasApiKey }: ViabilityCheckViewProps)
       const data = await apiPost<BulkViabilityResult[]>(
         '/viability-check-bulk',
         null,
-        { lead_postcode: postcode, surveyor_id: 'josh-001' }
+        { lead_postcode: postcode, surveyor_id: 'sam-001' }
       );
       setResults(data);
       toast.success(`Checked ${data.length} gaps`);
